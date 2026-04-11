@@ -6,7 +6,7 @@
   <title>FRC Replay Scheduler</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
+    <style>
     :root {
       --bg:        #0d1117;
       --surface:   #161b22;
@@ -32,42 +32,39 @@
       padding: 2rem 1rem;
     }
 
-    /* ── Header ── */
-    header {
+    /* ── Layout & Cards ── */
+    header, .card, #results, .divider {
       max-width: 720px;
-      margin: 0 auto 2.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
       border-left: 3px solid var(--accent);
       padding-left: 1rem;
     }
     header h1 {
       font-family: var(--mono);
       font-size: 1.5rem;
-      letter-spacing: 0.04em;
       color: var(--accent);
       text-transform: uppercase;
     }
-    header p {
-      color: var(--text-muted);
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-    }
+    header p { color: var(--text-muted); font-size: 0.875rem; }
 
-    /* ── Card ── */
     .card {
-      max-width: 720px;
-      margin: 0 auto 1.25rem;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
-    /* ── Form elements ── */
+    /* ── Form Elements ── */
     label {
       display: block;
       font-size: 0.75rem;
       font-weight: 600;
-      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-muted);
       margin-bottom: 0.4rem;
@@ -80,30 +77,17 @@
       border-radius: var(--radius);
       color: var(--text);
       font-family: var(--sans);
-      font-size: 0.95rem;
       padding: 0.55rem 0.75rem;
-      appearance: none;
       outline: none;
-      transition: border-color 0.15s;
     }
-    select:focus, input[type="number"]:focus {
-      border-color: var(--accent);
-    }
-    select:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    select:focus, input[type="number"]:focus { border-color: var(--accent); }
 
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
     }
-    @media (max-width: 500px) {
-      .form-row { grid-template-columns: 1fr; }
-    }
 
-    /* ── Button ── */
     button {
       background: var(--accent);
       color: #000;
@@ -112,67 +96,22 @@
       font-family: var(--mono);
       font-size: 0.875rem;
       font-weight: 600;
-      letter-spacing: 0.06em;
       text-transform: uppercase;
       padding: 0.6rem 1.5rem;
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
       margin-top: 1.25rem;
     }
-    button:hover:not(:disabled) { opacity: 0.85; }
-    button:active:not(:disabled) { transform: scale(0.98); }
     button:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* ── Status / error ── */
-    .status {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 0.75rem;
-      min-height: 1.2em;
-    }
-    .status.error { color: var(--red); }
-    .status.loading::after {
-      content: '';
-      display: inline-block;
-      width: 0.5em;
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink { 50% { opacity: 0; } }
-
-    /* ── Warning banner ── */
-    .warning {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.6rem;
-      background: rgba(240,165,0,0.08);
-      border: 1px solid var(--accent-dim);
-      border-radius: var(--radius);
-      padding: 0.75rem 1rem;
-      font-size: 0.825rem;
-      color: var(--accent);
-      margin-bottom: 1rem;
-    }
-    .warning-icon { flex-shrink: 0; font-size: 1rem; }
-
-    /* ── Results ── */
-    #results { max-width: 720px; margin: 0 auto; }
-
+    /* ── Results & Slots ── */
     .results-header {
       font-family: var(--mono);
       font-size: 0.75rem;
-      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text-muted);
       margin-bottom: 0.75rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border);
-    }
-
-    .slot-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
     }
 
     .slot {
@@ -183,81 +122,15 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 0.85rem 1rem;
-      animation: fadeIn 0.2s ease both;
+      margin-bottom: 0.5rem;
     }
-    .slot:nth-child(1) { animation-delay: 0.05s; }
-    .slot:nth-child(2) { animation-delay: 0.10s; }
-    .slot:nth-child(3) { animation-delay: 0.15s; }
-    .slot:nth-child(4) { animation-delay: 0.20s; }
-    .slot:nth-child(5) { animation-delay: 0.25s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
 
-    .slot-rank {
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      width: 1.5rem;
-      flex-shrink: 0;
-      text-align: right;
-    }
+    .slot-rank { font-family: var(--mono); width: 1.5rem; color: var(--text-muted); }
     .slot-rank.top { color: var(--accent); }
+    .slot-label { font-family: var(--mono); font-weight: 600; flex: 1; }
+    .slot-gap span { color: var(--green); font-weight: 600; }
 
-    .slot-label {
-      font-family: var(--mono);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      flex: 1;
-    }
-
-    .slot-gap {
-      font-family: var(--mono);
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .slot-gap span {
-      color: var(--green);
-      font-weight: 600;
-    }
-
-    .slot-badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      background: rgba(240,165,0,0.12);
-      color: var(--accent);
-      border: 1px solid var(--accent-dim);
-      border-radius: 3px;
-      padding: 0.15rem 0.4rem;
-      white-space: nowrap;
-    }
-
-    .null-result {
-      font-family: var(--mono);
-      font-size: 0.875rem;
-      color: var(--red);
-      padding: 1rem;
-      border: 1px solid #3d1a1a;
-      background: rgba(248,81,73,0.05);
-      border-radius: var(--radius);
-    }
-
-    /* ── Divider ── */
-    .divider {
-      max-width: 720px;
-      margin: 0 auto 1.25rem;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .schedule-container {
-      margin-top: 1.5rem;
-      border-top: 2px solid var(--border);
-      padding-top: 1rem;
-    }
-
+    /* ── Schedule Table ── */
     .match-row {
       display: grid;
       grid-template-columns: 4.5rem 5.5rem 1fr;
@@ -268,68 +141,86 @@
       font-size: 0.85rem;
     }
 
-    .match-row.has-replay-team {
-      background: rgba(240, 165, 0, 0.03);
-    }
-
+    .match-row.has-replay-team { background: rgba(240, 165, 0, 0.03); }
+    
     .match-row.break {
       background: var(--surface);
       color: var(--accent);
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
       border-top: 1px solid var(--accent-dim);
       border-bottom: 1px solid var(--accent-dim);
-      height: 2.5rem;
-    }
-
-    .team-chip.highlight {
-      background: var(--accent);
-      color: #000;
-      font-weight: 700;
     }
 
     .team-list {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alliance-group {
+      display: flex;
       gap: 6px;
+      flex-shrink: 0;
     }
 
-    /* Base chip style */
+    /* ── Team Chips ── */
     .team-chip {
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      min-width: 3.5rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      min-width: 4rem;
       text-align: center;
-      font-weight: 500;
+      border: 1px solid transparent;
+      display: inline-block;
     }
 
-    /* Color the chips based on CURRENT match alliance (the 3x3 split) */
-    .team-list .team-chip:nth-child(-n+3) { border-color: #7a0a16; background: rgba(206, 17, 38, 0.1); }
-    .team-list .team-chip:nth-child(n+4) { border-color: #003d6b; background: rgba(0, 102, 178, 0.1); }
+    /* Non-highlighted Tints */
+    .alliance-group:first-child .team-chip {
+      background: rgba(248, 81, 73, 0.1);
+      color: #f85149;
+      border-color: rgba(248, 81, 73, 0.2);
+    }
+    .alliance-group:last-child .team-chip {
+      background: rgba(56, 139, 253, 0.1);
+      color: #58a6ff;
+      border-color: rgba(56, 139, 253, 0.2);
+    }
 
-    /* Highlight the specific 6 teams with a solid "Original Alliance" color */
-    .team-chip.orig-red {
+    /* Tracked Team Highlights */
+    .team-chip.highlight-red {
       background: #ce1126 !important;
-      color: white !important;
-      border: 1px solid #7a0a16 !important;
-      box-shadow: 0 0 5px rgba(206, 17, 38, 0.5);
+      color: #ffffff !important;
+      border-color: #ff7b72 !important;
+      font-weight: 700;
     }
-
-    .team-chip.orig-blue {
+    .team-chip.highlight-blue {
       background: #0066b2 !important;
-      color: white !important;
-      border: 1px solid #003d6b !important;
-      box-shadow: 0 0 5px rgba(0, 102, 178, 0.5);
+      color: #ffffff !important;
+      border-color: #58a6ff !important;
+      font-weight: 700;
     }
 
-    .highlight-red { background: #ce1126 !important; color: white !important; border-color: #7a0a16 !important; }
-    .highlight-blue { background: #0066b2 !important; color: white !important; border-color: #003d6b !important; }
+    .vs-divider {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: bold;
+      padding: 0 4px;
+    }
 
-    .match-num { color: var(--text); font-weight: 600; }
-    .match-time { color: var(--text-muted); }
+    /* ── Utilities & Mobile ── */
+    @media (max-width: 500px) {
+      .form-row { grid-template-columns: 1fr; }
+      .vs-divider { display: none; }
+      .match-row { grid-template-columns: 3.5rem 1fr; }
+      .match-time { display: none; } /* Saves space on mobile rows */
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+    .status.loading::after { content: ''; animation: blink 1s step-end infinite; }
   </style>
 </head>
 <body>
@@ -585,16 +476,15 @@
       const targetNum = Number(replayMatchNum);
       const replayMatch = schedule.find(m => Number(m.matchNumber) === targetNum);
 
-      // Safety check to prevent the "undefined" error
       if (!replayMatch || !replayMatch.teams) return;
 
-      const redTeams = replayMatch.teams.slice(0, 3);
-      const blueTeams = replayMatch.teams.slice(3, 6);
+      // These are the 6 teams we are tracking
+      const replayTeams = replayMatch.teams;
       
       const startIndex = schedule.findIndex(m => Number(m.matchNumber) === targetNum);
 
       const container = document.createElement('div');
-      container.className = 'card schedule-container'; // Added 'card' for styling consistency
+      container.className = 'card schedule-container';
       container.innerHTML = `<div class="results-header">Full Schedule (from Q${targetNum})</div>`;
 
       const list = document.createElement('div');
@@ -614,31 +504,38 @@
         }
 
         const row = document.createElement('div');
-        const hasReplayTeam = match.teams.some(t => [...redTeams, ...blueTeams].includes(t));
+        const hasReplayTeam = match.teams.some(t => replayTeams.includes(t));
         row.className = `match-row ${hasReplayTeam ? 'has-replay-team' : ''}`;
         
         const timeStr = match.timestamp 
           ? new Date(match.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
           : '--:--';
 
-        const teamListHtml = match.teams.map((t, idx) => {
-          // 1. Is this team one of the 6 teams from the replay match?
-          const isReplayTeam = [...redTeams, ...blueTeams].includes(t);
-          
-          let highlightClass = '';
-          if (isReplayTeam) {
-            // 2. Color them based on their alliance in THIS specific match row
-            // idx 0, 1, 2 = Red | idx 3, 4, 5 = Blue
-            highlightClass = (idx < 3) ? 'highlight-red' : 'highlight-blue';
-          }
-          
-          return `<span class="team-chip ${highlightClass}">${t}</span>`;
-        }).join(' ');
+        // Helper to render a group of 3 teams (Red or Blue)
+        const renderGroup = (teams, offset) => {
+          return teams.map((t, idx) => {
+            const currentPos = offset + idx;
+            let highlightClass = '';
+            
+            if (replayTeams.includes(t)) {
+              // Highlight based on CURRENT alliance position
+              highlightClass = (currentPos < 3) ? 'highlight-red' : 'highlight-blue';
+            }
+            return `<span class="team-chip ${highlightClass}">${t}</span>`;
+          }).join(' ');
+        };
+
+        const redHtml = renderGroup(match.teams.slice(0, 3), 0);
+        const blueHtml = renderGroup(match.teams.slice(3, 6), 3);
 
         row.innerHTML = `
           <span class="match-num">Q${match.matchNumber}</span>
           <span class="match-time">${timeStr}</span>
-          <div class="team-list">${teamListHtml}</div>
+          <div class="team-list">
+            <div class="alliance-group">${redHtml}</div>
+            <span class="vs-divider">VS</span>
+            <div class="alliance-group">${blueHtml}</div>
+          </div>
         `;
         list.appendChild(row);
       }
