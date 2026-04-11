@@ -102,7 +102,6 @@
     transition: opacity 0.15s, transform 0.1s;
     white-space: nowrap;
     flex-shrink: 0;
-    /* match input height */
     height: 42px;
   }
   .btn-primary:hover { opacity: 0.88; }
@@ -131,101 +130,125 @@
 
   .warning-banner { background: rgba(232,148,75,0.08); border: 1px solid rgba(232,148,75,0.3); border-radius: var(--radius); color: #e8944b; font-size: 12px; font-family: var(--mono); padding: 9px 12px; margin-bottom: 12px; display: none; line-height: 1.5; }
 
-  /* Rank cards — 3-up on desktop, stacked on mobile */
-  .rank-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  /* Result rank cards — always single column */
+  .rank-cards { display: flex; flex-direction: column; gap: 16px; }
 
-  @media (max-width: 580px) {
-    .rank-cards { grid-template-columns: 1fr; }
-    .rank-card { display: grid; grid-template-columns: 56px 1fr; column-gap: 12px; }
-    .rank-card.rank-1::before { display: none; }
-    .rank-card.rank-1 { border-left: 3px solid var(--accent); }
-    .rank-badge { grid-column: 1; grid-row: 1; padding-top: 2px; }
-    .rank-slot  { grid-column: 2; grid-row: 1; }
-    .rank-desc  { grid-column: 2; grid-row: 2; }
-    .rank-stat-grid { grid-column: 1 / -1; grid-row: 3; margin-top: 10px; }
+  .rank-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
   }
-
-  .rank-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; position: relative; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
   .rank-card.rank-1 { border-color: var(--accent-dim); }
   .rank-card.rank-1::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
-  .rank-card.selected { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .rank-badge { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .rank-badge { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
   .rank-card.rank-1 .rank-badge { color: var(--rank1); }
   .rank-card.rank-2 .rank-badge { color: var(--rank2); }
   .rank-card.rank-3 .rank-badge { color: var(--rank3); }
+
   .rank-slot { font-family: var(--mono); font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
   .rank-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
-  .rank-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-  .rank-stat { background: var(--bg-card); border-radius: 4px; padding: 5px 7px; }
-  .rank-stat-label { font-size: 10px; color: var(--text-dim); margin-bottom: 2px; font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
-  .rank-stat-val { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
-  .rank-stat-val.warn { color: #e8944b; }
-  .rank-stat-val.good { color: var(--green); }
 
-  /* Breakdown table — horizontally scrollable on mobile */
-  .breakdown-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .breakdown-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 460px; }
-  .breakdown-table th { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  .breakdown-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-family: var(--mono); color: var(--text); }
+  /* Stat grid: always 3 equal columns, fills full width */
+  .rank-stat-grid-header {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    min-width: 0;
+    margin-bottom: 6px;
+  }
+
+  .rank-stat {
+    background: var(--bg-card);
+    border-radius: 4px;
+    padding: 6px 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .rank-stat.danger {
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
+  }
+  .rank-stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rank-stat-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rank-stat-val.warn   { color: #e8944b; }
+  .rank-stat-val.good   { color: var(--green); }
+  .rank-stat-val.danger { color: var(--red); }
+
+  .b2b-teams-note {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  /* Breakdown table */
+  .breakdown-wrap {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed; /* fixed layout: columns respect explicit widths */
+  }
+  .breakdown-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 7px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .breakdown-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .breakdown-table tr:last-child td { border-bottom: none; }
   .breakdown-table tr:hover td { background: rgba(255,255,255,0.02); }
 
-  .gap-bar-wrap { display: flex; align-items: center; gap: 6px; }
-  .gap-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; min-width: 36px; }
-  .gap-bar-fill { height: 100%; border-radius: 2px; background: var(--green); }
-  .gap-bar-fill.warn { background: #e8944b; }
-  .gap-bar-fill.bad  { background: var(--red); }
-
-  .schedule-note { font-size: 11px; color: var(--text-dim); font-family: var(--mono); margin-top: 10px; line-height: 1.5; }
   .surrogate-note { font-size: 10px; color: var(--text-dim); font-style: italic; }
 
   .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Ensure the card can grow to fit the table */
-.rank-card {
-  height: auto;
-  cursor: default; /* Removing click-to-select behavior since it's inline now */
-}
-
-.rank-card .breakdown-wrap {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.rank-card .breakdown-table {
-  min-width: 0; /* Allow it to shrink in the card */
-}
-
-/* Make cards full width to accommodate the table data clearly */
-.rank-cards {
-  grid-template-columns: 1fr; 
-  gap: 16px;
-}
-
-@media (min-width: 900px) {
-  /* On very wide screens, we can go 2-up, but 1-up is usually better for tables */
-  .rank-cards { grid-template-columns: 1fr; }
-
-
-/* Update the stat grid to 3 columns to fit the B2B indicator */
-.rank-stat-grid-header {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.rank-stat.danger {
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-}
-
-.rank-stat-val.danger {
-  color: var(--red);
-}}
 </style>
 </head>
 <body>
@@ -287,7 +310,7 @@
         <h2>Best Replay Slots</h2>
         <span class="replay-match-badge" id="replayBadge"></span>
       </div>
-      <div id="rankCards"></div>
+      <div class="rank-cards" id="rankCards"></div>
     </div>
   </div>
 
@@ -326,7 +349,6 @@ async function loadEvents() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Only keep competition events (not off-seasons types we don't care about)
     const qualifying = events.filter(e => [0,1,2,3,4,5,6,7,99].includes(e.event_type));
 
     const active = [], upcoming = [], past = [];
@@ -365,7 +387,6 @@ async function loadEvents() {
     sel.disabled = false;
     setStatus(`${qualifying.length} events loaded · ${active.length} active today`);
 
-    // Auto-select if exactly one is active
     if (active.length === 1) {
       sel.value = active[0].key;
       document.getElementById('loadScheduleBtn').disabled = false;
@@ -529,7 +550,7 @@ function renderResults(replayNum, top, teamObjs, maxMatches) {
   document.getElementById('replayBadge').textContent = `Replaying QM ${replayNum}`;
   const resultsDiv = document.getElementById('results');
   const rankCards = document.getElementById('rankCards');
-  
+
   resultsDiv.style.display = 'block';
   rankCards.innerHTML = '';
 
@@ -542,74 +563,75 @@ function renderResults(replayNum, top, teamObjs, maxMatches) {
 
   top.forEach((slot, i) => {
     const card = document.createElement('div');
-    card.className = `card rank-card ${i === 0 ? 'rank-1' : ''}`;
+    card.className = `rank-card ${i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : 'rank-3'}`;
 
     const position = slot.after === maxMatches ? 'After last match' : `After QM ${slot.after}`;
     const minGapStr = slot.minGap === Infinity ? '∞' : slot.minGap.toFixed(1);
     const avgGapStr = slot.avgGap === Infinity ? '∞' : slot.avgGap.toFixed(1);
-    
-    // logic for Back-to-Back indicator
+
     const b2bTeams = Object.entries(slot.gaps)
       .filter(([, g]) => g.minGap < 2)
       .map(([key]) => teamNum(key));
-    
+
     const hasB2B = b2bTeams.length > 0;
-    const b2bLabel = hasB2B ? `YES (${b2bTeams.join(', ')})` : 'NONE';
     const minGapClass = hasB2B ? 'danger' : (slot.minGap < 3 ? 'warn' : 'good');
 
     let tableRows = '';
     teamObjs.forEach(tObj => {
       const g = slot.gaps[tObj.key];
       const mGap = g.minGap === Infinity ? '∞' : g.minGap.toFixed(1);
-      const rowWarn = g.minGap < 2 ? 'color: var(--red); font-weight: bold;' : (g.minGap < 3 ? 'color: #e8944b' : '');
-      const surr = tObj.surrogate ? ' <span class="surrogate-note">(s)</span>' : '';
-      
+      const rowStyle = g.minGap < 2 ? 'color: var(--red); font-weight: 600;' : (g.minGap < 3 ? 'color: #e8944b;' : '');
+      const surrMark = tObj.surrogate ? '*' : '';
+
       tableRows += `
         <tr>
-          <td><span class="team-chip ${tObj.color}${tObj.surrogate ? ' surrogate' : ''}" style="font-size:10px; padding:2px 6px;">${teamNum(tObj.key)}${surr}</span></td>
+          <td><span class="team-chip ${tObj.color}${tObj.surrogate ? ' surrogate' : ''}" style="font-size:10px;padding:2px 7px;">${teamNum(tObj.key)}${surrMark}</span></td>
           <td>${g.prevMatch ? 'QM ' + g.prevMatch : '—'}</td>
           <td>${g.nextMatch ? 'QM ' + g.nextMatch : '—'}</td>
-          <td style="${rowWarn}">${mGap}</td>
+          <td style="${rowStyle}">${mGap}</td>
         </tr>`;
     });
 
     card.innerHTML = `
       <div class="rank-badge">${rankLabels[i] || '#' + (i + 1)}</div>
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 15px;">
-        <div style="flex: 1;">
-          <div class="rank-slot">${position}</div>
-          <div class="rank-desc">Insertion Point: ${slot.after}.5</div>
+      <div class="rank-slot">${position}</div>
+      <div class="rank-desc">Insertion point: ${slot.after}.5</div>
+
+      <div class="rank-stat-grid-header">
+        <div class="rank-stat ${hasB2B ? 'danger' : ''}">
+          <div class="rank-stat-label">B2B Risk</div>
+          <div class="rank-stat-val ${hasB2B ? 'danger' : 'good'}">${hasB2B ? 'YES' : 'NONE'}</div>
         </div>
-        <div class="rank-stat-grid-header">
-          <div class="rank-stat ${hasB2B ? 'danger' : ''}">
-            <div class="rank-stat-label">B2B Risk</div>
-            <div class="rank-stat-val ${hasB2B ? 'danger' : 'good'}">${b2bLabel}</div>
-          </div>
-          <div class="rank-stat">
-            <div class="rank-stat-label">Min Gap</div>
-            <div class="rank-stat-val ${minGapClass}">${minGapStr}</div>
-          </div>
-          <div class="rank-stat">
-            <div class="rank-stat-label">Avg Gap</div>
-            <div class="rank-stat-val">${avgGapStr}</div>
-          </div>
+        <div class="rank-stat">
+          <div class="rank-stat-label">Min Gap</div>
+          <div class="rank-stat-val ${minGapClass}">${minGapStr}</div>
+        </div>
+        <div class="rank-stat">
+          <div class="rank-stat-label">Avg Gap</div>
+          <div class="rank-stat-val">${avgGapStr}</div>
         </div>
       </div>
 
+      ${hasB2B ? `<div class="b2b-teams-note">B2B teams: ${b2bTeams.join(', ')}</div>` : ''}
+
       <div class="breakdown-wrap">
-        <div class="section-label" style="font-size: 9px; margin-bottom: 6px;">Team Turnaround Detail</div>
+        <div class="section-label" style="font-size:9px;margin-bottom:6px;">Team Turnaround Detail</div>
         <table class="breakdown-table">
+          <colgroup>
+            <col style="width:30%">
+            <col style="width:25%">
+            <col style="width:25%">
+            <col style="width:20%">
+          </colgroup>
           <thead>
             <tr>
               <th>Team</th>
-              <th>Prev Match</th>
-              <th>Next Match</th>
-              <th>Min Gap</th>
+              <th>Prev</th>
+              <th>Next</th>
+              <th>Gap</th>
             </tr>
           </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
+          <tbody>${tableRows}</tbody>
         </table>
       </div>
     `;
