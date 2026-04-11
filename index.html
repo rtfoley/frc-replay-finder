@@ -265,7 +265,6 @@
 
   <div id="results"></div>
 
-  <script src="config.js"></script>
   <script src="replayScheduler.js"></script>
   <script>
     // -------------------------------------------------------------------------
@@ -273,10 +272,11 @@
     // -------------------------------------------------------------------------
 
     const TBA_BASE = 'https://www.thebluealliance.com/api/v3';
+    const TBA_KEY = 'sBQ9s7T3fMH9qo4aUtvTOXNkrchqIH2Jwmy1GFIwjW94148bba7T9lu9pjdSrTqx';
 
     async function tbaGet(path) {
       const res = await fetch(`${TBA_BASE}${path}`, {
-        headers: { 'X-TBA-Auth-Key': TBA_CONFIG.apiKey },
+        headers: { 'X-TBA-Auth-Key': TBA_KEY },
       });
       if (!res.ok) throw new Error(`TBA ${res.status}: ${path}`);
       return res.json();
