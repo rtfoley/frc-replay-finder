@@ -251,6 +251,53 @@
       height: 1px;
       background: var(--border);
     }
+
+    .schedule-container {
+      margin-top: 1.5rem;
+      border-top: 2px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    .match-row {
+      display: grid;
+      grid-template-columns: 4.5rem 5.5rem 1fr;
+      align-items: center;
+      padding: 0.4rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+    }
+
+    .match-row.has-replay-team {
+      background: rgba(240, 165, 0, 0.03);
+    }
+
+    .match-row.break {
+      background: var(--surface);
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-top: 1px solid var(--accent-dim);
+      border-bottom: 1px solid var(--accent-dim);
+      height: 2.5rem;
+    }
+
+    .team-chip {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      color: var(--text-muted);
+    }
+
+    .team-chip.highlight {
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .match-num { color: var(--text); font-weight: 600; }
+    .match-time { color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -431,10 +478,12 @@
 
       try {
         const schedule = await fetchSchedule(eventKey);
+        const replayTeams = schedule.find(m => m.matchNumber === matchNum).teams;
         setStatus('Calculating…', 'loading');
 
         const result = findReplaySlot(schedule, matchNum, { topN: 5 });
         renderResults(result, matchNum);
+        renderSchedule(schedule, replayTeams, matchNum); // New call
         setStatus('');
       } catch (err) {
         setStatus(err.message, 'error');
@@ -490,6 +539,50 @@
 
       wrap.appendChild(list);
       resultsEl.appendChild(wrap);
+    }
+
+    function renderSchedule(schedule, replayTeams, replayMatchNum) {
+      const container = document.createElement('div');
+      container.className = 'schedule-container';
+      container.innerHTML = `<div class="results-header">Full Schedule (from Q${replayMatchNum})</div>`;
+
+      const startIndex = schedule.findIndex(m => m.matchNumber === replayMatchNum);
+      
+      for (let i = startIndex; i < schedule.length; i++) {
+        const match = schedule[i];
+        
+        // Detect and render breaks
+        if (i > startIndex && schedule[i-1].timestamp && match.timestamp) {
+          const gap = (new Date(match.timestamp) - new Date(schedule[i-1].timestamp)) / 60000;
+          if (gap >= 30) {
+            const breakRow = document.createElement('div');
+            breakRow.className = 'match-row break';
+            breakRow.innerHTML = `<span></span><span>BREAK</span>`;
+            container.appendChild(breakRow);
+          }
+        }
+
+        const hasReplayTeam = match.teams.some(t => replayTeams.includes(t));
+        const row = document.createElement('div');
+        row.className = `match-row ${hasReplayTeam ? 'has-replay-team' : ''}`;
+        
+        const timeStr = match.timestamp 
+          ? new Date(match.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+          : '--:--';
+
+        const teamList = match.teams.map(t => {
+          const isReplayTeam = replayTeams.includes(t);
+          return `<span class="team-chip ${isReplayTeam ? 'highlight' : ''}">${t}</span>`;
+        }).join(' ');
+
+        row.innerHTML = `
+          <span class="match-num">Q${match.matchNumber}</span>
+          <span class="match-time">${timeStr}</span>
+          <div class="team-list">${teamList}</div>
+        `;
+        container.appendChild(row);
+      }
+      resultsEl.appendChild(container);
     }
   </script>
 </body>
