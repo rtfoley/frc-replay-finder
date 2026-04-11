@@ -1,764 +1,496 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FRC Replay Finder</title>
-<script src="config.js"></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FRC Replay Scheduler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --accent:    #f0a500;
+      --accent-dim:#7d560a;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --green:     #3fb950;
+      --red:       #f85149;
+      --mono:      'Share Tech Mono', monospace;
+      --sans:      'Barlow', sans-serif;
+      --radius:    6px;
+    }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0d0f12;
-    --bg-panel: #13161b;
-    --bg-card: #1a1e25;
-    --bg-input: #0d0f12;
-    --border: #2a2f3a;
-    --border-bright: #3d4455;
-    --accent: #e8b84b;
-    --accent-dim: #7a5f1e;
-    --accent-bg: #1f1a0d;
-    --text: #e2e6ef;
-    --text-muted: #6b7590;
-    --text-dim: #434a5e;
-    --red: #e85d4b;
-    --red-bg: #1f0e0c;
-    --red-border: #5a1f18;
-    --blue: #4b8ce8;
-    --blue-bg: #0c1220;
-    --blue-border: #1a3563;
-    --green: #4be87a;
-    --green-bg: #0b1f10;
-    --green-border: #1a4d26;
-    --rank1: #e8b84b;
-    --rank2: #8a9bb5;
-    --rank3: #a06b42;
-    --font: 'IBM Plex Sans', sans-serif;
-    --mono: 'IBM Plex Mono', monospace;
-    --radius: 6px;
-  }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
 
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+    /* ── Header ── */
+    header {
+      max-width: 720px;
+      margin: 0 auto 2.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+    }
+    header h1 {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    header p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
 
-  header {
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .logo { font-family: var(--mono); font-weight: 600; font-size: 12px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
-  .logo-divider { width: 1px; height: 18px; background: var(--border-bright); flex-shrink: 0; }
-  .logo-title { font-size: 13px; font-weight: 500; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ── Card ── */
+    .card {
+      max-width: 720px;
+      margin: 0 auto 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
 
-  .main { max-width: 960px; margin: 0 auto; padding: 20px 16px; }
+    /* ── Form elements ── */
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
 
-  .section-label { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+    select, input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      padding: 0.55rem 0.75rem;
+      appearance: none;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    select:focus, input[type="number"]:focus {
+      border-color: var(--accent);
+    }
+    select:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
-  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 500px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
 
-  .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-  .form-group:last-of-type { margin-bottom: 0; }
-  .form-group label { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; }
+    /* ── Button ── */
+    button {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.5rem;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-top: 1.25rem;
+    }
+    button:hover:not(:disabled) { opacity: 0.85; }
+    button:active:not(:disabled) { transform: scale(0.98); }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  .form-group input, .form-group select {
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color 0.15s;
-    width: 100%;
-    min-width: 0;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  .form-group select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7590' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(232,184,75,0.08); }
+    /* ── Status / error ── */
+    .status {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      min-height: 1.2em;
+    }
+    .status.error { color: var(--red); }
+    .status.loading::after {
+      content: '';
+      display: inline-block;
+      width: 0.5em;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
 
-  .form-inline { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
-  .form-inline .form-group { flex: 1; min-width: 120px; margin-bottom: 0; }
-  .form-inline .form-group.narrow { flex: 0 0 130px; }
+    /* ── Warning banner ── */
+    .warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      background: rgba(240,165,0,0.08);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-size: 0.825rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .warning-icon { flex-shrink: 0; font-size: 1rem; }
 
-  .btn-primary {
-    background: var(--accent);
-    color: #0d0f12;
-    border: none;
-    border-radius: var(--radius);
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 18px;
-    cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-    white-space: nowrap;
-    flex-shrink: 0;
-    height: 42px;
-  }
-  .btn-primary:hover { opacity: 0.88; }
-  .btn-primary:active { transform: scale(0.98); }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    /* ── Results ── */
+    #results { max-width: 720px; margin: 0 auto; }
 
-  .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    .results-header {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
 
-  #status { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+    .slot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
 
-  .error-msg {
-    background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--radius);
-    color: var(--red); font-size: 13px; padding: 12px 14px; margin-bottom: 14px; display: none; line-height: 1.5;
-  }
-  .warn-msg {
-    background: rgba(232,148,75,0.08); border: 1px solid rgba(232,148,75,0.3); border-radius: var(--radius);
-    color: #e8944b; font-size: 12px; font-family: var(--mono); padding: 9px 12px; margin-bottom: 14px; display: none; line-height: 1.5;
-  }
+    .slot {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      animation: fadeIn 0.2s ease both;
+    }
+    .slot:nth-child(1) { animation-delay: 0.05s; }
+    .slot:nth-child(2) { animation-delay: 0.10s; }
+    .slot:nth-child(3) { animation-delay: 0.15s; }
+    .slot:nth-child(4) { animation-delay: 0.20s; }
+    .slot:nth-child(5) { animation-delay: 0.25s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
 
-  #results { display: none; }
+    .slot-rank {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      width: 1.5rem;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .slot-rank.top { color: var(--accent); }
 
-  .results-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-  .results-header h2 { font-size: 15px; font-weight: 600; }
+    .slot-label {
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
 
-  .replay-match-badge { font-family: var(--mono); font-size: 11px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 4px; padding: 3px 8px; }
+    .slot-gap {
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .slot-gap span {
+      color: var(--green);
+      font-weight: 600;
+    }
 
-  /* Alliance rows */
-  .alliance-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-  .alliance-row  { display: flex; gap: 6px; flex-wrap: nowrap; }
+    .slot-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(240,165,0,0.12);
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+      border-radius: 3px;
+      padding: 0.15rem 0.4rem;
+      white-space: nowrap;
+    }
 
-  .team-chip { font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 1px solid; white-space: nowrap; }
-  .team-chip.red  { background: var(--red-bg);  color: var(--red);  border-color: var(--red-border);  }
-  .team-chip.blue { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
-  .team-chip.surrogate { background: rgba(107,117,144,0.08); color: var(--text-muted); border-color: var(--border); font-style: italic; }
+    .null-result {
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      color: var(--red);
+      padding: 1rem;
+      border: 1px solid #3d1a1a;
+      background: rgba(248,81,73,0.05);
+      border-radius: var(--radius);
+    }
 
-  .warning-banner { background: rgba(232,148,75,0.08); border: 1px solid rgba(232,148,75,0.3); border-radius: var(--radius); color: #e8944b; font-size: 12px; font-family: var(--mono); padding: 9px 12px; margin-bottom: 12px; display: none; line-height: 1.5; }
-
-  /* Rank cards */
-  .rank-cards { display: flex; flex-direction: column; gap: 16px; }
-
-  .rank-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-  .rank-card.rank-1 { border-color: var(--accent-dim); }
-  .rank-card.rank-1::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
-
-  .rank-badge { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
-  .rank-card.rank-1 .rank-badge { color: var(--rank1); }
-  .rank-card.rank-2 .rank-badge { color: var(--rank2); }
-  .rank-card.rank-3 .rank-badge { color: var(--rank3); }
-
-  .rank-slot { font-family: var(--mono); font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-  .rank-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
-
-  /* Stat grid: 4 equal columns */
-  .rank-stat-grid-header {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    min-width: 0;
-    margin-bottom: 6px;
-  }
-
-  .rank-stat {
-    background: var(--bg-card);
-    border-radius: 4px;
-    padding: 6px 8px;
-    min-width: 0;
-    overflow: hidden;
-  }
-  .rank-stat.danger { background: var(--red-bg); border: 1px solid var(--red-border); }
-  .rank-stat.good   { background: var(--green-bg); border: 1px solid var(--green-border); }
-
-  .rank-stat-label {
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-bottom: 3px;
-    font-family: var(--mono);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .rank-stat-val {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .rank-stat-val.warn   { color: #e8944b; }
-  .rank-stat-val.good   { color: var(--green); }
-  .rank-stat-val.danger { color: var(--red); }
-
-  .b2b-teams-note {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--red);
-    margin-bottom: 10px;
-    line-height: 1.5;
-  }
-
-  /* Breakdown table */
-  .breakdown-wrap {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .breakdown-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    table-layout: fixed;
-  }
-  .breakdown-table th {
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    padding: 7px 8px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .breakdown-table td {
-    padding: 7px 8px;
-    border-bottom: 1px solid var(--border);
-    font-family: var(--mono);
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .breakdown-table tr:last-child td { border-bottom: none; }
-  .breakdown-table tr:hover td { background: rgba(255,255,255,0.02); }
-
-  .surrogate-note { font-size: 10px; color: var(--text-dim); font-style: italic; }
-  .break-tag { color: var(--green); font-size: 10px; }
-
-  .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
+    /* ── Divider ── */
+    .divider {
+      max-width: 720px;
+      margin: 0 auto 1.25rem;
+      height: 1px;
+      background: var(--border);
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <span class="logo">FRC</span>
-  <div class="logo-divider"></div>
-  <span class="logo-title">Qualification Match Replay Finder</span>
-</header>
-
-<div class="main">
+  <header>
+    <h1>Replay Scheduler</h1>
+    <p>FRC qualification match replay placement tool</p>
+  </header>
 
   <div class="card">
-    <div class="section-label">Event</div>
-    <div class="form-group">
-      <label>Select Event</label>
-      <select id="eventSelect" onchange="onEventSelect()" disabled>
-        <option value="">— click "Load Events" to start —</option>
-      </select>
-    </div>
-    <div class="form-inline" style="margin-top:10px;">
-      <div class="form-group narrow">
-        <label>Break threshold (min)</label>
-        <input type="number" id="breakThreshold" value="45" min="10" max="180" step="5">
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn-primary" id="loadEventsBtn" onclick="loadEvents()">Refresh Events</button>
-      <button class="btn-primary" id="loadScheduleBtn" onclick="loadSchedule()" disabled>Load Schedule</button>
-      <span id="status"></span>
-    </div>
-  </div>
-
-  <div class="error-msg" id="errorMsg"></div>
-  <div class="warn-msg"  id="warnMsg"></div>
-
-  <div id="matchSelectCard" style="display:none">
-    <div class="card">
-      <div class="section-label">Match to Replay</div>
-      <div class="form-group">
-        <label>Match</label>
-        <select id="matchSelect" onchange="onMatchSelect()">
-          <option value="">— select a match —</option>
+    <div class="form-row">
+      <div>
+        <label for="event-select">Event</label>
+        <select id="event-select" disabled>
+          <option value="">Loading events…</option>
         </select>
       </div>
-      <div id="selectedTeams" style="display:none">
-        <div class="section-label" style="margin-bottom:8px; margin-top:4px;">Teams in Replay</div>
-        <div class="alliance-rows" id="allianceRows"></div>
-        <div class="warning-banner" id="surrogateWarn"></div>
-      </div>
-      <div class="form-inline" style="margin-top:4px;">
-        <div class="form-group narrow">
-          <label>Top results</label>
-          <select id="topN">
-            <option value="3" selected>Top 3</option>
-            <option value="5">Top 5</option>
-            <option value="10">Top 10</option>
-          </select>
-        </div>
-        <button class="btn-primary" id="findBtn" onclick="findReplay()" disabled>Find Best Slots</button>
+      <div>
+        <label for="match-input">Match to Replay</label>
+        <input type="number" id="match-input" min="1" placeholder="e.g. 35" disabled />
       </div>
     </div>
-
-    <div id="results" style="display:none">
-      <div class="results-header">
-        <h2>Best Replay Slots</h2>
-        <span class="replay-match-badge" id="replayBadge"></span>
-      </div>
-      <div class="rank-cards" id="rankCards"></div>
-    </div>
+    <button id="find-btn" disabled>Find Replay Slots</button>
+    <div class="status" id="status"></div>
   </div>
 
-</div>
+  <div id="results"></div>
 
-<script>
-const TBA_BASE = 'https://www.thebluealliance.com/api/v3';
-let scheduleData  = [];
-let matchMap      = {};
-let breakAfter    = new Set(); // match numbers M where a significant gap exists between QM M and QM M+1
-let timingMissing = false;     // true if any consecutive pair was missing time data
+  <script src="config.js"></script>
+  <script src="replayScheduler.js"></script>
+  <script>
+    // -------------------------------------------------------------------------
+    // TBA API
+    // -------------------------------------------------------------------------
 
-function setStatus(msg, loading=false) {
-  document.getElementById('status').innerHTML = loading
-    ? `<span class="spinner"></span>${msg}` : msg;
-}
-function showError(msg) { const e = document.getElementById('errorMsg'); e.textContent = msg; e.style.display = 'block'; }
-function clearError()   { document.getElementById('errorMsg').style.display = 'none'; }
-function showWarn(msg)  { const e = document.getElementById('warnMsg');  e.innerHTML  = msg; e.style.display = 'block'; }
-function clearWarn()    { document.getElementById('warnMsg').style.display = 'none'; }
+    const TBA_BASE = 'https://www.thebluealliance.com/api/v3';
 
-async function tbaFetch(path) {
-  const key = TBA_CONFIG?.apiKey;
-  if (!key) throw new Error('TBA_CONFIG.apiKey not found — check config.js is loaded.');
-  const res = await fetch(`${TBA_BASE}${path}`, { headers: { 'X-TBA-Auth-Key': key } });
-  if (!res.ok) throw new Error(`TBA API error ${res.status}: ${res.statusText}`);
-  return res.json();
-}
-
-async function loadEvents() {
-  clearError(); clearWarn();
-  const btn = document.getElementById('loadEventsBtn');
-  btn.disabled = true;
-  setStatus('Fetching events…', true);
-
-  try {
-    const year = new Date().getFullYear();
-    const events = await tbaFetch(`/events/${year}/simple`);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const qualifying = events.filter(e => [0,1,2,3,4,5,6,7,99].includes(e.event_type));
-    const active = [], upcoming = [], past = [];
-    qualifying.forEach(e => {
-      if (!e.start_date || !e.end_date) { upcoming.push(e); return; }
-      const start = new Date(e.start_date + 'T00:00:00');
-      const end   = new Date(e.end_date   + 'T00:00:00');
-      if (start <= today && end >= today) active.push(e);
-      else if (start > today)             upcoming.push(e);
-      else                                past.push(e);
-    });
-
-    upcoming.sort((a,b) => a.start_date.localeCompare(b.start_date));
-    past.sort((a,b) => b.end_date.localeCompare(a.end_date));
-
-    const sel = document.getElementById('eventSelect');
-    sel.innerHTML = '<option value="">— select an event —</option>';
-
-    function addGroup(label, list) {
-      if (!list.length) return;
-      const grp = document.createElement('optgroup');
-      grp.label = label;
-      list.forEach(e => {
-        const opt = document.createElement('option');
-        opt.value = e.key;
-        opt.textContent = `${e.short_name || e.name} — ${e.key}`;
-        grp.appendChild(opt);
+    async function tbaGet(path) {
+      const res = await fetch(`${TBA_BASE}${path}`, {
+        headers: { 'X-TBA-Auth-Key': TBA_CONFIG.apiKey },
       });
-      sel.appendChild(grp);
+      if (!res.ok) throw new Error(`TBA ${res.status}: ${path}`);
+      return res.json();
     }
 
-    addGroup(`Active Now (${active.length})`, active);
-    addGroup(`Upcoming (${upcoming.length})`, upcoming);
-    addGroup(`Past (${past.length})`, past);
-
-    sel.disabled = false;
-    setStatus(`${qualifying.length} events loaded · ${active.length} active today`);
-
-    if (active.length === 1) {
-      sel.value = active[0].key;
-      document.getElementById('loadScheduleBtn').disabled = false;
-    }
-  } catch(e) {
-    showError(e.message);
-    setStatus('');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-function onEventSelect() {
-  const val = document.getElementById('eventSelect').value;
-  document.getElementById('loadScheduleBtn').disabled = !val;
-  document.getElementById('matchSelectCard').style.display = 'none';
-  clearError(); 
-  clearWarn();
-}
-
-// Detect schedule breaks between consecutive matches.
-// Records match number M in breakAfter if the gap between QM M and QM M+1 >= threshold.
-// Pairs with missing time on either side are skipped (conservative); timingMissing is set if any are skipped.
-function detectBreaks(quals, thresholdMin) {
-  breakAfter.clear();
-  timingMissing = false;
-  const thresholdSec = thresholdMin * 60;
-
-  for (let i = 0; i < quals.length - 1; i++) {
-    const a = quals[i];
-    const b = quals[i + 1];
-    const tA = a.time ?? a.predicted_time ?? null;
-    const tB = b.time ?? b.predicted_time ?? null;
-
-    if (tA === null || tB === null) {
-      timingMissing = true;
-      continue; // skip — don't assume a break
+    /**
+     * Fetch qual matches for an event and return them as our internal schedule format.
+     * TBA match key format: {event_key}_qm{match_number}
+     */
+    async function fetchSchedule(eventKey) {
+      const matches = await tbaGet(`/event/${eventKey}/matches`);
+      return matches
+        .filter(m => m.comp_level === 'qm')
+        .map(m => ({
+          matchNumber: m.match_number,
+          teams: [
+            ...m.alliances.red.team_keys,
+            ...m.alliances.blue.team_keys,
+          ].map(k => k.replace('frc', '')), // strip "frc" prefix → "254"
+          timestamp: m.time ? new Date(m.time * 1000) : undefined,
+        }))
+        .sort((a, b) => a.matchNumber - b.matchNumber);
     }
 
-    if ((tB - tA) >= thresholdSec) {
-      breakAfter.add(a.match_number);
-    }
-  }
-}
+    /**
+     * Fetch events for a given year, sorted: active today first, then by start date.
+     */
+    async function fetchEvents(year) {
+      const events = await tbaGet(`/events/${year}/simple`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-async function loadSchedule() {
-  clearError(); clearWarn();
-  const eventKey = document.getElementById('eventSelect').value;
-  if (!eventKey) { showError('Please select an event.'); return; }
-
-  const btn = document.getElementById('loadScheduleBtn');
-  btn.disabled = true;
-  setStatus('Fetching schedule…', true);
-
-  try {
-    const matches = await tbaFetch(`/event/${eventKey}/matches`);
-    const quals = matches
-      .filter(m => m.comp_level === 'qm')
-      .sort((a,b) => a.match_number - b.match_number);
-
-    if (!quals.length) throw new Error('No qualification matches found for this event yet.');
-
-    scheduleData = quals;
-    matchMap = {};
-    quals.forEach(m => matchMap[m.match_number] = m);
-
-    const threshold = parseInt(document.getElementById('breakThreshold').value) || 45;
-    detectBreaks(quals, threshold);
-
-    // Warn if timing data was partially missing
-    if (timingMissing) {
-      const missing = quals.filter(m => (m.time ?? m.predicted_time ?? null) === null).length;
-      showWarn(
-        `⚠ Timing data missing for ${missing} of ${quals.length} matches — those intervals were skipped during break detection and will not be flagged as breaks. ` +
-        `Gap scores still use match-number distance for all matches. Break indicators may be incomplete.`
-      );
-    } else if (breakAfter.size === 0) {
-      showWarn(`ℹ No schedule breaks detected above ${threshold} min. Break indicators will not appear in results.`);
-    } else {
-      const breakList = [...breakAfter].map(n => `QM ${n}→${n+1}`).join(', ');
-      showWarn(`ℹ ${breakAfter.size} break(s) detected (≥${threshold} min): ${breakList}`);
-      // Use warn-msg styling but with a neutral info tone
-      document.getElementById('warnMsg').style.color = 'var(--text-muted)';
-      document.getElementById('warnMsg').style.borderColor = 'var(--border-bright)';
-      document.getElementById('warnMsg').style.background = 'var(--bg-panel)';
+      return events
+        .filter(e => e.event_type !== 99) // exclude offseasons with type 99 (preseason)
+        .sort((a, b) => {
+          const aActive = isActiveToday(a, today);
+          const bActive = isActiveToday(b, today);
+          if (aActive !== bActive) return bActive - aActive; // active first
+          return new Date(a.start_date) - new Date(b.start_date);
+        });
     }
 
-    const sel = document.getElementById('matchSelect');
-    sel.innerHTML = '<option value="">— select a match —</option>';
-    quals.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.match_number;
-      const red  = m.alliances.red.team_keys.map(k => k.replace('frc','')).join(', ');
-      const blue = m.alliances.blue.team_keys.map(k => k.replace('frc','')).join(', ');
-      opt.textContent = `QM ${m.match_number}  —  R: ${red}  |  B: ${blue}`;
-      sel.appendChild(opt);
+    function parseLocalDate(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d); // local midnight, no UTC shift
+    }
+
+    function isActiveToday(event, today) {
+      const start = parseLocalDate(event.start_date);
+      const end   = parseLocalDate(event.end_date);
+      return today >= start && today <= end;
+    }
+
+    function formatEventLabel(event, today) {
+      const active = isActiveToday(event, today);
+      const prefix = active ? '▶ ' : '';
+      return `${prefix}${event.name} (${event.event_code.toUpperCase()})`;
+    }
+
+    // -------------------------------------------------------------------------
+    // UI
+    // -------------------------------------------------------------------------
+
+    const eventSelect = document.getElementById('event-select');
+    const matchInput  = document.getElementById('match-input');
+    const findBtn     = document.getElementById('find-btn');
+    const statusEl    = document.getElementById('status');
+    const resultsEl   = document.getElementById('results');
+
+    function setStatus(msg, type = '') {
+      statusEl.textContent = msg;
+      statusEl.className = 'status' + (type ? ` ${type}` : '');
+    }
+
+    function enableForm() {
+      eventSelect.disabled = false;
+      matchInput.disabled  = false;
+      findBtn.disabled     = false;
+    }
+
+    // Load events on page load
+    (async () => {
+      const year = new Date().getFullYear();
+      setStatus(`Loading ${year} events…`, 'loading');
+      try {
+        const events = await fetchEvents(year);
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        eventSelect.innerHTML = '<option value="">— Select an event —</option>';
+
+        // Separator between active and upcoming if both exist
+        const active   = events.filter(e => isActiveToday(e, today));
+        const inactive = events.filter(e => !isActiveToday(e, today));
+
+        if (active.length) {
+          const grp = document.createElement('optgroup');
+          grp.label = '▶  Active Today';
+          active.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.key;
+            opt.textContent = `${e.name} (${e.event_code.toUpperCase()})`;
+            grp.appendChild(opt);
+          });
+          eventSelect.appendChild(grp);
+        }
+
+        if (inactive.length) {
+          const grp = document.createElement('optgroup');
+          grp.label = 'All Events';
+          inactive.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e.key;
+            opt.textContent = `${e.name} — ${e.start_date}`;
+            grp.appendChild(opt);
+          });
+          eventSelect.appendChild(grp);
+        }
+
+        enableForm();
+        setStatus(`${events.length} events loaded.`);
+      } catch (err) {
+        setStatus(`Failed to load events: ${err.message}`, 'error');
+        console.error(err);
+      }
+    })();
+
+    // Run on button click
+    findBtn.addEventListener('click', async () => {
+      resultsEl.innerHTML = '';
+      const eventKey   = eventSelect.value;
+      const matchNum   = parseInt(matchInput.value, 10);
+
+      if (!eventKey) { setStatus('Select an event first.', 'error'); return; }
+      if (!matchNum || matchNum < 1) { setStatus('Enter a valid match number.', 'error'); return; }
+
+      findBtn.disabled = true;
+      setStatus('Fetching schedule…', 'loading');
+
+      try {
+        const schedule = await fetchSchedule(eventKey);
+        setStatus('Calculating…', 'loading');
+
+        const result = findReplaySlot(schedule, matchNum, { topN: 5 });
+        renderResults(result, matchNum);
+        setStatus('');
+      } catch (err) {
+        setStatus(err.message, 'error');
+        console.error(err);
+      } finally {
+        findBtn.disabled = false;
+      }
     });
 
-    document.getElementById('matchSelectCard').style.display = 'block';
-    document.getElementById('selectedTeams').style.display = 'none';
-    document.getElementById('findBtn').disabled = true;
-    document.getElementById('results').style.display = 'none';
-    setStatus(`${quals.length} qual matches loaded · ${breakAfter.size} break(s) detected.`);
-    document.getElementById('matchSelectCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch(e) {
-    showError(e.message);
-    setStatus('');
-  } finally {
-    btn.disabled = false;
-  }
-}
+    function renderResults(result, matchNum) {
+      resultsEl.innerHTML = '';
 
-function getTeamsInMatch(match) {
-  const red  = match.alliances.red.team_keys.map(k => ({ key: k, color: 'red',  surrogate: match.alliances.red.surrogate_team_keys?.includes(k)  }));
-  const blue = match.alliances.blue.team_keys.map(k => ({ key: k, color: 'blue', surrogate: match.alliances.blue.surrogate_team_keys?.includes(k) }));
-  return [...red, ...blue];
-}
+      if (!result) {
+        resultsEl.innerHTML = `
+          <div class="null-result">
+            No valid replay slot found for Q${matchNum} — all positions result in back-to-back matches for at least one team. Place manually.
+          </div>`;
+        return;
+      }
 
-function teamNum(key) { return key.replace('frc',''); }
+      const wrap = document.createElement('div');
+      wrap.className = 'card';
 
-function onMatchSelect() {
-  clearError();
-  const num = parseInt(document.getElementById('matchSelect').value);
-  const teamsDiv = document.getElementById('selectedTeams');
-  const btn = document.getElementById('findBtn');
+      if (result.missingTimestamps) {
+        wrap.innerHTML = `
+          <div class="warning">
+            <span class="warning-icon">⚠</span>
+            <span>Schedule is missing timestamps — break detection unavailable. Gaps are based on match order only.</span>
+          </div>`;
+      }
 
-  if (!num) { btn.disabled = true; teamsDiv.style.display = 'none'; return; }
+      wrap.innerHTML += `<div class="results-header">Suggested slots for Q${matchNum} replay</div>`;
 
-  const teams = getTeamsInMatch(matchMap[num]);
-  const container = document.getElementById('allianceRows');
-  container.innerHTML = '';
+      const list = document.createElement('div');
+      list.className = 'slot-list';
 
-  ['red', 'blue'].forEach(color => {
-    const rowTeams = teams.filter(t => t.color === color);
-    if (!rowTeams.length) return;
-    const row = document.createElement('div');
-    row.className = 'alliance-row';
-    rowTeams.forEach(t => {
-      const chip = document.createElement('span');
-      chip.className = `team-chip ${t.color}${t.surrogate ? ' surrogate' : ''}`;
-      chip.textContent = teamNum(t.key) + (t.surrogate ? ' (s)' : '');
-      row.appendChild(chip);
-    });
-    container.appendChild(row);
-  });
+      const topGap = result.candidates[0].minGap;
 
-  const surrogates = teams.filter(t => t.surrogate);
-  const warnEl = document.getElementById('surrogateWarn');
-  if (surrogates.length) {
-    warnEl.textContent = `⚠ ${surrogates.map(t=>teamNum(t.key)).join(', ')} flagged as surrogate(s) — included in gap analysis.`;
-    warnEl.style.display = 'block';
-  } else {
-    warnEl.style.display = 'none';
-  }
+      result.candidates.forEach((c, i) => {
+        const isTied = c.minGap === topGap;
+        const gapDisplay = c.minGap === Infinity ? '∞' : c.minGap;
 
-  teamsDiv.style.display = 'block';
-  btn.disabled = false;
-  document.getElementById('results').style.display = 'none';
-}
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.innerHTML = `
+          <span class="slot-rank ${isTied && i === 0 ? 'top' : ''}">#${i + 1}</span>
+          <span class="slot-label">${c.insertionLabel}</span>
+          ${c.isAfterBreak ? '<span class="slot-badge">after break</span>' : ''}
+          <span class="slot-gap">min gap <span>${gapDisplay}</span></span>
+        `;
+        list.appendChild(slot);
+      });
 
-function getTeamSchedule(teamKey) {
-  return scheduleData
-    .filter(m => [...m.alliances.red.team_keys, ...m.alliances.blue.team_keys].includes(teamKey))
-    .map(m => m.match_number);
-}
-
-// Returns true if the interval between matchA and matchB (ordered) crosses at least one break boundary.
-// The replay is inserted at replayAfter + 0.5, so:
-//   - prevMatch → replay: crosses a break if breakAfter contains any M in [prevMatch, replayAfter]
-//   - replay → nextMatch: crosses a break if breakAfter contains any M in [replayAfter+1, nextMatch-1]
-function intervalCrossesBreak(fromMatch, toMatch) {
-  const lo = Math.min(fromMatch, toMatch);
-  const hi = Math.max(fromMatch, toMatch);
-  for (let m = lo; m < hi; m++) {
-    if (breakAfter.has(m)) return true;
-  }
-  return false;
-}
-
-function computeGaps(replayAfter, teamKeys) {
-  const gaps = {};
-  teamKeys.forEach(key => {
-    const sched = getTeamSchedule(key);
-    const before = sched.filter(n => n <= replayAfter);
-    const after  = sched.filter(n => n > replayAfter);
-    const prevMatch = before.length ? Math.max(...before) : null;
-    const nextMatch = after.length  ? Math.min(...after)  : null;
-
-    // gap = distance in match-number units from the replay insertion point (replayAfter + 0.5)
-    const gapBefore = prevMatch !== null ? (replayAfter + 0.5) - prevMatch : Infinity;
-    const gapAfter  = nextMatch !== null ? nextMatch - (replayAfter + 0.5) : Infinity;
-
-    const prevBreak = prevMatch !== null ? intervalCrossesBreak(prevMatch, replayAfter + 1) : false;
-    const nextBreak = nextMatch !== null ? intervalCrossesBreak(replayAfter + 1, nextMatch)  : false;
-
-    gaps[key] = { prevMatch, nextMatch, gapBefore, gapAfter, minGap: Math.min(gapBefore, gapAfter), prevBreak, nextBreak };
-  });
-  return gaps;
-}
-
-function scoreSlot(gaps) {
-  const vals = Object.values(gaps);
-  // breakCount: number of teams for whom the tightest gap side crosses a break
-  const breakCount = vals.filter(g => {
-    if (g.gapBefore <= g.gapAfter) return g.prevBreak;
-    return g.nextBreak;
-  }).length;
-
-  return {
-    minGap:        Math.min(...vals.map(g => g.minGap)),
-    avgGap:        vals.reduce((s,g) => s + Math.min(g.gapBefore, g.gapAfter), 0) / vals.length,
-    hasBackToBack: vals.some(g => g.minGap < 2),
-    breakCount,
-  };
-}
-
-function findReplay() {
-  clearError();
-  const replayNum = parseInt(document.getElementById('matchSelect').value);
-  const topN = parseInt(document.getElementById('topN').value);
-  const teamObjs = getTeamsInMatch(matchMap[replayNum]);
-  const teamKeys = teamObjs.map(t => t.key);
-  const maxMatches = scheduleData[scheduleData.length-1].match_number;
-
-  const candidates = [];
-  for (let after = replayNum + 1; after <= maxMatches; after++) {
-    const gaps = computeGaps(after, teamKeys);
-    candidates.push({ after, gaps, ...scoreSlot(gaps) });
-  }
-
-  // Sort priority:
-  // 1. No B2B (fewer is better)
-  // 2. More teams crossing a break on their tight side (more = better — they have more rest)
-  // 3. Higher minGap
-  // 4. Higher avgGap
-  candidates.sort((a,b) => {
-    if (a.hasBackToBack !== b.hasBackToBack) return a.hasBackToBack ? 1 : -1;
-    if (b.breakCount   !== a.breakCount)    return b.breakCount - a.breakCount;
-    if (b.minGap       !== a.minGap)        return b.minGap - a.minGap;
-    return b.avgGap - a.avgGap;
-  });
-
-  renderResults(replayNum, candidates.slice(0, topN), teamObjs, maxMatches, teamKeys.length);
-}
-
-function renderResults(replayNum, top, teamObjs, maxMatches, totalTeams) {
-  document.getElementById('replayBadge').textContent = `Replaying QM ${replayNum}`;
-  const resultsDiv = document.getElementById('results');
-  const rankCards  = document.getElementById('rankCards');
-
-  resultsDiv.style.display = 'block';
-  rankCards.innerHTML = '';
-
-  if (!top.length) {
-    rankCards.innerHTML = '<div class="card" style="color:var(--text-muted); font-size:13px;">No valid slots found.</div>';
-    return;
-  }
-
-  const rankLabels = ['Best Option', '2nd Option', '3rd Option', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
-
-  top.forEach((slot, i) => {
-    const card = document.createElement('div');
-    card.className = `rank-card ${i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : 'rank-3'}`;
-
-    const position   = slot.after === maxMatches ? 'After last match' : `After QM ${slot.after}`;
-    const minGapStr  = slot.minGap === Infinity ? '∞' : slot.minGap.toFixed(1);
-    const avgGapStr  = slot.avgGap === Infinity ? '∞' : slot.avgGap.toFixed(1);
-
-    const b2bTeams = Object.entries(slot.gaps)
-      .filter(([, g]) => g.minGap < 2)
-      .map(([key]) => teamNum(key));
-    const hasB2B = b2bTeams.length > 0;
-
-    const minGapClass   = hasB2B ? 'danger' : (slot.minGap < 3 ? 'warn' : 'good');
-
-    let tableRows = '';
-    teamObjs.forEach(tObj => {
-      const g = slot.gaps[tObj.key];
-      const mGap = g.minGap === Infinity ? '∞' : g.minGap.toFixed(1);
-      const rowStyle = g.minGap < 2 ? 'color: var(--red); font-weight: 600;' : (g.minGap < 3 ? 'color: #e8944b;' : '');
-      const surrMark = tObj.surrogate ? '*' : '';
-
-      // Annotate prev/next cells with (break) if that side crosses a schedule break
-      const prevText = g.prevMatch
-        ? `QM ${g.prevMatch}${g.prevBreak ? ' <span class="break-tag">(break)</span>' : ''}`
-        : '—';
-      const nextText = g.nextMatch
-        ? `QM ${g.nextMatch}${g.nextBreak ? ' <span class="break-tag">(break)</span>' : ''}`
-        : '—';
-
-      tableRows += `
-        <tr>
-          <td><span class="team-chip ${tObj.color}${tObj.surrogate ? ' surrogate' : ''}" style="font-size:10px;padding:2px 7px;">${teamNum(tObj.key)}${surrMark}</span></td>
-          <td>${prevText}</td>
-          <td>${nextText}</td>
-          <td style="${rowStyle}">${mGap}</td>
-        </tr>`;
-    });
-
-    card.innerHTML = `
-      <div class="rank-badge">${rankLabels[i] || '#' + (i + 1)}</div>
-      <div class="rank-slot">${position}</div>
-      <div class="rank-desc">Insertion point: ${slot.after}.5</div>
-
-      <div class="rank-stat-grid-header">
-        <div class="rank-stat ${hasB2B ? 'danger' : ''}">
-          <div class="rank-stat-label">B2B Risk</div>
-          <div class="rank-stat-val ${hasB2B ? 'danger' : 'good'}">${hasB2B ? 'YES' : 'NONE'}</div>
-        </div>
-        <div class="rank-stat">
-          <div class="rank-stat-label">Min Gap</div>
-          <div class="rank-stat-val ${minGapClass}">${minGapStr}</div>
-        </div>
-        <div class="rank-stat">
-          <div class="rank-stat-label">Avg Gap</div>
-          <div class="rank-stat-val">${avgGapStr}</div>
-        </div>
-      </div>
-
-      ${hasB2B ? `<div class="b2b-teams-note">B2B teams: ${b2bTeams.join(', ')}</div>` : ''}
-
-      <div class="breakdown-wrap">
-        <div class="section-label" style="font-size:9px;margin-bottom:6px;">Team Turnaround Detail</div>
-        <table class="breakdown-table">
-          <colgroup>
-            <col style="width:22%">
-            <col style="width:30%">
-            <col style="width:30%">
-            <col style="width:18%">
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Team</th>
-              <th>Prev</th>
-              <th>Next</th>
-              <th>Gap</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      </div>
-    `;
-
-    rankCards.appendChild(card);
-  });
-
-  resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-window.addEventListener('DOMContentLoaded', loadEvents);
-</script>
-
+      wrap.appendChild(list);
+      resultsEl.appendChild(wrap);
+    }
+  </script>
 </body>
 </html>
