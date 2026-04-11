@@ -130,17 +130,19 @@ section('computeTeamGap');
 
   // Insert at index 2 (between Q2 and Q3)
   // prevIdx=0 (Q1), nextIdx=4 (Q5)
-  // before = 2 - 0 - 1 = 1, after = 4 - 2 - 1 = 1
+  // before = 2 - 0 - 1 = 1
+  // after = 4 - 2 = 2 (The matches Q3 and Q4 are the gap)
   const g1 = computeTeamGap(sched, 'T1', 2);
-  assert('before gap = 1 (Q2 between Q1 and replay)', g1.before === 1, `got ${g1.before}`);
-  assert('after gap = 1 (Q3 between replay and Q5)', g1.after === 1, `got ${g1.after}`);
+  assert('before gap = 1 (Q2 between Q1 and replay)', g1.before === 1);
+  assert('after gap = 2 (Q3, Q4 between replay and Q5)', g1.after === 2, `got ${g1.after}`);
 
   // Insert at index 7 (between Q7 and Q8)
   // prevIdx=4 (Q5), nextIdx=9 (Q10)
-  // before = 7 - 4 - 1 = 2, after = 9 - 7 - 1 = 1
+  // before = 7 - 4 - 1 = 2
+  // after = 9 - 7 = 2 (Q8 and Q9 are the gap)
   const g2 = computeTeamGap(sched, 'T1', 7);
-  assert('before gap = 2 (Q6,Q7 between Q5 and replay)', g2.before === 2, `got ${g2.before}`);
-  assert('after gap = 1 (Q8 between replay and Q10)', g2.after === 1, `got ${g2.after}`);
+  assert('before gap = 2 (Q6,Q7 between Q5 and replay)', g2.before === 2);
+  assert('after gap = 2 (Q8, Q9 between replay and Q10)', g2.after === 2, `got ${g2.after}`);
 
   // Insert after last match (index 10)
   // prevIdx=9 (Q10), nextIdx=null
@@ -341,22 +343,33 @@ section('Max-min objective');
   ];
 
   // Insert at idx=5 (after Q37, before Q38):
-  // T1-T6: prev=2(Q35), next=7(Q40), before=5-2-1=2, after=7-5-1=1 → min=1
+  // T1-T6: prev=2(Q35), next=7(Q40)
+  // before = 5 - 2 - 1 = 2
+  // after = 7 - 5 = 2
   const r5 = computeMinGapAtInsertion(mini2, teams, 5);
-  assert('Insert after Q37: minGap=1', r5.minGap === 1, `got ${r5.minGap}`);
+  assert('Insert after Q37: minGap=2', r5.minGap === 2, `got ${r5.minGap}`);
 
   // Insert at idx=4 (after Q36, before Q37):
-  // T1-T6: prev=2(Q35), next=7(Q40), before=4-2-1=1, after=7-4-1=2 → min=1
+  // T1-T6: prev=2(Q35), next=7(Q40)
+  // before = 4 - 2 - 1 = 1
+  // after = 7 - 4 = 3
   const r4 = computeMinGapAtInsertion(mini2, teams, 4);
   assert('Insert after Q36: minGap=1', r4.minGap === 1, `got ${r4.minGap}`);
 
   const result = findReplaySlot(mini2, 35);
   assert('Returns non-null', result !== null);
+
   if (result) {
     const best = result.candidates[0];
-    assert('Optimal slot is after Q42 (minGap=2)', best.insertionIndex === 10,
+    
+    // Tie-breaker check: Both idx 5 (after Q37) and idx 10 (after Q42) 
+    // now result in a minGap of 2. The algorithm prefers the earliest tie.
+    assert('Optimal slot is after Q37 (minGap=2)', best.insertionIndex === 5,
       `got insertionIndex=${best.insertionIndex}, minGap=${best.minGap}, label=${best.insertionLabel}`);
+      
     assert('minGap is 2', best.minGap === 2, `got ${best.minGap}`);
+    
+    // Ensure the candidates list is healthy
     assert('Returns up to 5 candidates by default', result.candidates.length <= 5);
     assert('Candidates sorted minGap desc', result.candidates.every((c, i) =>
       i === 0 || result.candidates[i - 1].minGap >= c.minGap

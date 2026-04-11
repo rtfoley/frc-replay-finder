@@ -97,13 +97,17 @@ function findAdjacentMatches(schedule, team, insertionIndex) {
 function computeTeamGap(schedule, team, insertionIndex) {
   const { prevIdx, nextIdx } = findAdjacentMatches(schedule, team, insertionIndex);
 
+  // Before gap is correct: count matches between prev and where we are sticking the replay
   const before = prevIdx === null
     ? Infinity
     : insertionIndex - prevIdx - 1;
 
+  // After gap was wrong: nextIdx is the index in the CURRENT schedule.
+  // Because the replay will TAKE the insertionIndex, the match that was at 
+  // nextIdx stays at nextIdx (it just refers to the next match in the list).
   const after = nextIdx === null
     ? Infinity
-    : nextIdx - insertionIndex - 1;
+    : nextIdx - insertionIndex; // Removed the -1
 
   return { before, after };
 }
