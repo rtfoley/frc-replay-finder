@@ -121,9 +121,11 @@
 
   .replay-match-badge { font-family: var(--mono); font-size: 11px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 4px; padding: 3px 8px; }
 
-  .teams-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  /* Alliance rows — red and blue each pinned to their own line, no cross-wrapping */
+  .alliance-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .alliance-row  { display: flex; gap: 6px; flex-wrap: nowrap; }
 
-  .team-chip { font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 1px solid; }
+  .team-chip { font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 1px solid; white-space: nowrap; }
   .team-chip.red  { background: var(--red-bg);  color: var(--red);  border-color: var(--red-border);  }
   .team-chip.blue { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
   .team-chip.surrogate { background: rgba(107,117,144,0.08); color: var(--text-muted); border-color: var(--border); font-style: italic; }
@@ -217,7 +219,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
-    table-layout: fixed; /* fixed layout: columns respect explicit widths */
+    table-layout: fixed;
   }
   .breakdown-table th {
     font-family: var(--mono);
@@ -289,7 +291,7 @@
       </div>
       <div id="selectedTeams" style="display:none">
         <div class="section-label" style="margin-bottom:8px; margin-top:4px;">Teams in Replay</div>
-        <div class="teams-row" id="teamsRow"></div>
+        <div class="alliance-rows" id="allianceRows"></div>
         <div class="warning-banner" id="surrogateWarn"></div>
       </div>
       <div class="form-inline" style="margin-top:4px;">
@@ -469,13 +471,21 @@ function onMatchSelect() {
   if (!num) { btn.disabled = true; teamsDiv.style.display = 'none'; return; }
 
   const teams = getTeamsInMatch(matchMap[num]);
-  const row = document.getElementById('teamsRow');
-  row.innerHTML = '';
-  teams.forEach(t => {
-    const chip = document.createElement('span');
-    chip.className = `team-chip ${t.color}${t.surrogate ? ' surrogate' : ''}`;
-    chip.textContent = teamNum(t.key) + (t.surrogate ? ' (surrogate)' : '');
-    row.appendChild(chip);
+  const container = document.getElementById('allianceRows');
+  container.innerHTML = '';
+
+  ['red', 'blue'].forEach(color => {
+    const rowTeams = teams.filter(t => t.color === color);
+    if (!rowTeams.length) return;
+    const row = document.createElement('div');
+    row.className = 'alliance-row';
+    rowTeams.forEach(t => {
+      const chip = document.createElement('span');
+      chip.className = `team-chip ${t.color}${t.surrogate ? ' surrogate' : ''}`;
+      chip.textContent = teamNum(t.key) + (t.surrogate ? ' (s)' : '');
+      row.appendChild(chip);
+    });
+    container.appendChild(row);
   });
 
   const surrogates = teams.filter(t => t.surrogate);
