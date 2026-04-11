@@ -283,18 +283,50 @@
       height: 2.5rem;
     }
 
-    .team-chip {
-      display: inline-block;
-      padding: 0.1rem 0.4rem;
-      border-radius: 3px;
-      color: var(--text-muted);
-    }
-
     .team-chip.highlight {
       background: var(--accent);
       color: #000;
       font-weight: 700;
     }
+
+    .team-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* Base chip style */
+    .team-chip {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      min-width: 3.5rem;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Color the chips based on CURRENT match alliance (the 3x3 split) */
+    .team-list .team-chip:nth-child(-n+3) { border-color: #7a0a16; background: rgba(206, 17, 38, 0.1); }
+    .team-list .team-chip:nth-child(n+4) { border-color: #003d6b; background: rgba(0, 102, 178, 0.1); }
+
+    /* Highlight the specific 6 teams with a solid "Original Alliance" color */
+    .team-chip.orig-red {
+      background: #ce1126 !important;
+      color: white !important;
+      border: 1px solid #7a0a16 !important;
+      box-shadow: 0 0 5px rgba(206, 17, 38, 0.5);
+    }
+
+    .team-chip.orig-blue {
+      background: #0066b2 !important;
+      color: white !important;
+      border: 1px solid #003d6b !important;
+      box-shadow: 0 0 5px rgba(0, 102, 178, 0.5);
+    }
+
+    .highlight-red { background: #ce1126 !important; color: white !important; border-color: #7a0a16 !important; }
+    .highlight-blue { background: #0066b2 !important; color: white !important; border-color: #003d6b !important; }
 
     .match-num { color: var(--text); font-weight: 600; }
     .match-time { color: var(--text-muted); }
@@ -353,10 +385,11 @@
         .filter(m => m.comp_level === 'qm')
         .map(m => ({
           matchNumber: m.match_number,
+          // Explicitly order: Red 1, 2, 3 THEN Blue 1, 2, 3
           teams: [
             ...m.alliances.red.team_keys,
             ...m.alliances.blue.team_keys,
-          ].map(k => k.replace('frc', '')), // strip "frc" prefix → "254"
+          ].map(k => k.replace('frc', '')), 
           timestamp: m.time ? new Date(m.time * 1000) : undefined,
         }))
         .sort((a, b) => a.matchNumber - b.matchNumber);
@@ -467,23 +500,30 @@
     // Run on button click
     findBtn.addEventListener('click', async () => {
       resultsEl.innerHTML = '';
-      const eventKey   = eventSelect.value;
-      const matchNum   = parseInt(matchInput.value, 10);
+      const eventKey = eventSelect.value;
+      const matchNum = parseInt(matchInput.value, 10);
 
-      if (!eventKey) { setStatus('Select an event first.', 'error'); return; }
-      if (!matchNum || matchNum < 1) { setStatus('Enter a valid match number.', 'error'); return; }
+      if (!eventKey || !matchNum) return;
 
       findBtn.disabled = true;
-      setStatus('Fetching schedule…', 'loading');
+      setStatus('Fetching schedule...', 'loading');
 
       try {
         const schedule = await fetchSchedule(eventKey);
-        const replayTeams = schedule.find(m => m.matchNumber === matchNum).teams;
-        setStatus('Calculating…', 'loading');
+        
+        // TYPE-SAFE LOOKUP: Ensure matchNum is treated as a number
+        const replayMatch = schedule.find(m => Number(m.matchNumber) === matchNum);
+        
+        if (!replayMatch) {
+          throw new Error(`Match Q${matchNum} not found in the current schedule.`);
+        }
 
+        // Now it's safe to call these
         const result = findReplaySlot(schedule, matchNum, { topN: 5 });
+        
         renderResults(result, matchNum);
-        renderSchedule(schedule, replayTeams, matchNum); // New call
+        renderSchedule(schedule, matchNum); // Pass the raw schedule and number
+        
         setStatus('');
       } catch (err) {
         setStatus(err.message, 'error');
@@ -541,47 +581,69 @@
       resultsEl.appendChild(wrap);
     }
 
-    function renderSchedule(schedule, replayTeams, replayMatchNum) {
-      const container = document.createElement('div');
-      container.className = 'schedule-container';
-      container.innerHTML = `<div class="results-header">Full Schedule (from Q${replayMatchNum})</div>`;
+    function renderSchedule(schedule, replayMatchNum) {
+      const targetNum = Number(replayMatchNum);
+      const replayMatch = schedule.find(m => Number(m.matchNumber) === targetNum);
 
-      const startIndex = schedule.findIndex(m => m.matchNumber === replayMatchNum);
+      // Safety check to prevent the "undefined" error
+      if (!replayMatch || !replayMatch.teams) return;
+
+      const redTeams = replayMatch.teams.slice(0, 3);
+      const blueTeams = replayMatch.teams.slice(3, 6);
+      
+      const startIndex = schedule.findIndex(m => Number(m.matchNumber) === targetNum);
+
+      const container = document.createElement('div');
+      container.className = 'card schedule-container'; // Added 'card' for styling consistency
+      container.innerHTML = `<div class="results-header">Full Schedule (from Q${targetNum})</div>`;
+
+      const list = document.createElement('div');
       
       for (let i = startIndex; i < schedule.length; i++) {
         const match = schedule[i];
         
-        // Detect and render breaks
+        // Break rendering
         if (i > startIndex && schedule[i-1].timestamp && match.timestamp) {
           const gap = (new Date(match.timestamp) - new Date(schedule[i-1].timestamp)) / 60000;
           if (gap >= 30) {
             const breakRow = document.createElement('div');
             breakRow.className = 'match-row break';
-            breakRow.innerHTML = `<span></span><span>BREAK</span>`;
-            container.appendChild(breakRow);
+            breakRow.innerHTML = `<span>BREAK</span>`;
+            list.appendChild(breakRow);
           }
         }
 
-        const hasReplayTeam = match.teams.some(t => replayTeams.includes(t));
         const row = document.createElement('div');
+        const hasReplayTeam = match.teams.some(t => [...redTeams, ...blueTeams].includes(t));
         row.className = `match-row ${hasReplayTeam ? 'has-replay-team' : ''}`;
         
         const timeStr = match.timestamp 
           ? new Date(match.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
           : '--:--';
 
-        const teamList = match.teams.map(t => {
-          const isReplayTeam = replayTeams.includes(t);
-          return `<span class="team-chip ${isReplayTeam ? 'highlight' : ''}">${t}</span>`;
+        const teamListHtml = match.teams.map((t, idx) => {
+          // 1. Is this team one of the 6 teams from the replay match?
+          const isReplayTeam = [...redTeams, ...blueTeams].includes(t);
+          
+          let highlightClass = '';
+          if (isReplayTeam) {
+            // 2. Color them based on their alliance in THIS specific match row
+            // idx 0, 1, 2 = Red | idx 3, 4, 5 = Blue
+            highlightClass = (idx < 3) ? 'highlight-red' : 'highlight-blue';
+          }
+          
+          return `<span class="team-chip ${highlightClass}">${t}</span>`;
         }).join(' ');
 
         row.innerHTML = `
           <span class="match-num">Q${match.matchNumber}</span>
           <span class="match-time">${timeStr}</span>
-          <div class="team-list">${teamList}</div>
+          <div class="team-list">${teamListHtml}</div>
         `;
-        container.appendChild(row);
+        list.appendChild(row);
       }
+      
+      container.appendChild(list);
       resultsEl.appendChild(container);
     }
   </script>
