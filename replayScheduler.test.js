@@ -8,6 +8,7 @@ const {
   computeTeamGap,
   computeMinGapAtInsertion,
   detectBreaks,
+  isScoredMatch,
 } = require('./replayScheduler');
 
 // ---------------------------------------------------------------------------
@@ -31,7 +32,7 @@ function section(title) {
   console.log(`\n── ${title} ──`);
 }
 
-function makeMatch(matchNumber, teams, minutesFromStart = null) {
+function makeMatch(matchNumber, teams, minutesFromStart = null, extras = {}) {
   const base = new Date('2024-04-01T09:00:00Z');
   return {
     matchNumber,
@@ -39,6 +40,7 @@ function makeMatch(matchNumber, teams, minutesFromStart = null) {
     timestamp: minutesFromStart !== null
       ? new Date(base.getTime() + minutesFromStart * 60000)
       : undefined,
+    ...extras,
   };
 }
 
@@ -383,6 +385,79 @@ section('Max-min objective');
   // topN=1
   const result1 = findReplaySlot(mini2, 35, { topN: 1 });
   assert('topN=1 returns exactly 1 candidate', result1 !== null && result1.candidates.length === 1);
+}
+
+// ---------------------------------------------------------------------------
+// Test 8: Scored matches are ignored as insertion anchors
+// ---------------------------------------------------------------------------
+
+section('Scored match filtering');
+
+{
+  assert('Normalized hasScore=true marks a match as scored',
+    isScoredMatch(makeMatch(1, ['A','B','C','D','E','F'], 0, { hasScore: true })));
+
+  assert('TBA alliance scores mark a match as scored',
+    isScoredMatch({
+      matchNumber: 2,
+      teams: ['A','B','C','D','E','F'],
+      alliances: {
+        red: { score: 12 },
+        blue: { score: 10 },
+      },
+    }));
+
+  assert('TBA -1 scores do not mark an unplayed match as scored',
+    !isScoredMatch({
+      matchNumber: 3,
+      teams: ['A','B','C','D','E','F'],
+      alliances: {
+        red: { score: -1 },
+        blue: { score: -1 },
+      },
+    }));
+}
+
+{
+  const teams = ['T1','T2','T3','T4','T5','T6'];
+  const sched = [
+    makeMatch(35, teams, 0),
+    makeMatch(36, ['A','B','C','D','E','F'], 6, { hasScore: true }),
+    makeMatch(37, ['A','B','C','D','E','F'], 12),
+    makeMatch(38, ['A','B','C','D','E','F'], 18),
+    makeMatch(39, ['A','B','C','D','E','F'], 24),
+    makeMatch(40, teams, 30),
+  ];
+
+  const result = findReplaySlot(sched, 35, { topN: 10 });
+  assert('Returns candidates after skipping scored anchors', result !== null);
+  if (result) {
+    assert('Does not return insertion after scored Q36',
+      !result.candidates.some(c => c.insertionLabel === 'after Q36'));
+    assert('Still returns later unscored insertion anchors',
+      result.candidates.some(c => c.insertionLabel === 'after Q37'));
+  }
+
+  const scoreAgnosticResult = findReplaySlot(sched, 35, {
+    topN: 10,
+    considerScores: false,
+  });
+  assert('Can include scored anchors when score filtering is disabled',
+    scoreAgnosticResult !== null &&
+    scoreAgnosticResult.candidates.some(c => c.insertionLabel === 'after Q36'));
+}
+
+{
+  const teams = ['T1','T2','T3','T4','T5','T6'];
+  const sched = [
+    makeMatch(35, teams, 0),
+    makeMatch(36, ['A','B','C','D','E','F'], 6, { hasScore: true }),
+    makeMatch(37, ['A','B','C','D','E','F'], 12, { hasScore: true }),
+    makeMatch(38, teams, 18, { hasScore: true }),
+  ];
+
+  const result = findReplaySlot(sched, 35);
+  assert('Returns null when every otherwise valid insertion follows a scored match', result === null);
 }
 
 // ---------------------------------------------------------------------------

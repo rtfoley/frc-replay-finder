@@ -3,7 +3,7 @@
  * Core algorithm — no UI dependencies, framework-agnostic.
  *
  * Terminology:
- *   match        — { matchNumber: number, teams: string[], timestamp?: Date }
+ *   match        — { matchNumber: number, teams: string[], timestamp?: Date, hasScore?: boolean }
  *   schedule     — ordered array of matches (ascending matchNumber)
  *   insertionIndex — integer i means replay is inserted BETWEEN schedule[i-1] and schedule[i]
  *                    i.e. replay sits at position i in the 0-based array after insertion
@@ -46,6 +46,38 @@ function detectBreaks(schedule) {
   }
 
   return { breakAfterIndex, hasTimestamps };
+}
+
+// ---------------------------------------------------------------------------
+// Score detection
+// ---------------------------------------------------------------------------
+
+function isScoredValue(score) {
+  return score >= 0;
+}
+
+/**
+ * Returns true when a match already has a score and should not be used as the
+ * preceding match for a replay insertion candidate.
+ *
+ * Accepts the normalized `hasScore` flag used by the UI and TBA-shaped
+ * alliance score fields for callers that pass raw-ish match objects.
+ *
+ * @param {Object} match
+ * @returns {boolean}
+ */
+function isScoredMatch(match) {
+  if (!match) return false;
+  if (match.hasScore === true) return true;
+
+  const redScore = match.alliances && match.alliances.red
+    ? match.alliances.red.score
+    : undefined;
+  const blueScore = match.alliances && match.alliances.blue
+    ? match.alliances.blue.score
+    : undefined;
+
+  return isScoredValue(redScore) || isScoredValue(blueScore);
 }
 
 // ---------------------------------------------------------------------------
@@ -158,10 +190,11 @@ function computeMinGapAtInsertion(schedule, teams, insertionIndex) {
 /**
  * Find the best insertion points for a replay match.
  *
- * @param {Array}  schedule            Ordered array of { matchNumber, teams, timestamp? }
+ * @param {Array}  schedule            Ordered array of { matchNumber, teams, timestamp?, hasScore? }
  * @param {number} replayMatchNumber   Match to replay (e.g. 35)
  * @param {Object} [options]
  * @param {number} [options.topN=5]    Max candidates to return
+ * @param {boolean} [options.considerScores=true]  Skip insertions after scored matches
  * @returns {{ candidates: Array, missingTimestamps: boolean }|null}
  *
  * Each candidate: {
@@ -172,7 +205,7 @@ function computeMinGapAtInsertion(schedule, teams, insertionIndex) {
  *   isAfterBreak: boolean,      // informational: follows a 30+ min break
  * }
  */
-function findReplaySlot(schedule, replayMatchNumber, { topN = 5 } = {}) {
+function findReplaySlot(schedule, replayMatchNumber, { topN = 5, considerScores = true } = {}) {
   const replayMatchIdx = schedule.findIndex(m => m.matchNumber === replayMatchNumber);
   if (replayMatchIdx === -1) {
     throw new Error(`Match ${replayMatchNumber} not found in schedule`);
@@ -186,6 +219,8 @@ function findReplaySlot(schedule, replayMatchNumber, { topN = 5 } = {}) {
   const candidates = [];
 
   for (let i = replayMatchIdx + 1; i <= schedule.length; i++) {
+    if (considerScores && isScoredMatch(schedule[i - 1])) continue;
+
     const { minGap, teamGaps } = computeMinGapAtInsertion(schedule, replayTeams, i);
 
     // Hard constraint: no back-to-back on either side for any team (Infinity = unconstrained)
@@ -236,4 +271,5 @@ module.exports = {
   computeTeamGap,
   computeMinGapAtInsertion,
   detectBreaks,
+  isScoredMatch,
 };
