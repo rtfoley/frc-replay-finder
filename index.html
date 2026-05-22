@@ -92,6 +92,12 @@
       margin-top: 1rem;
     }
 
+    .schedule-options {
+      margin: -0.35rem 0 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
     .checkbox-label {
       display: inline-flex;
       align-items: center;
@@ -213,12 +219,12 @@
     }
 
     /* Non-highlighted Tints */
-    .alliance-group:first-child .team-chip {
+    .alliance-red .team-chip {
       background: rgba(248, 81, 73, 0.1);
       color: #f85149;
       border-color: rgba(248, 81, 73, 0.2);
     }
-    .alliance-group:last-child .team-chip {
+    .alliance-blue .team-chip {
       background: rgba(56, 139, 253, 0.1);
       color: #58a6ff;
       border-color: rgba(56, 139, 253, 0.2);
@@ -376,6 +382,9 @@
     const findBtn     = document.getElementById('find-btn');
     const statusEl    = document.getElementById('status');
     const resultsEl   = document.getElementById('results');
+    let currentSchedule = null;
+    let currentReplayMatchNum = null;
+    let redAllianceRight = false;
 
     function setStatus(msg, type = '') {
       statusEl.textContent = msg;
@@ -536,6 +545,9 @@
     }
 
     function renderSchedule(schedule, replayMatchNum) {
+      currentSchedule = schedule;
+      currentReplayMatchNum = replayMatchNum;
+
       const targetNum = Number(replayMatchNum);
       const replayMatch = schedule.find(m => Number(m.matchNumber) === targetNum);
 
@@ -548,7 +560,22 @@
 
       const container = document.createElement('div');
       container.className = 'card schedule-container';
-      container.innerHTML = `<div class="results-header">Full Schedule (from Q${targetNum})</div>`;
+      container.innerHTML = `
+        <div class="results-header">Full Schedule (from Q${targetNum})</div>
+        <div class="schedule-options">
+          <label class="checkbox-label" for="swap-alliance-sides-input">
+            <input type="checkbox" id="swap-alliance-sides-input" ${redAllianceRight ? 'checked' : ''} />
+            Show red alliance on the right
+          </label>
+        </div>
+      `;
+
+      const swapAllianceSidesInput = container.querySelector('#swap-alliance-sides-input');
+      swapAllianceSidesInput.addEventListener('change', () => {
+        redAllianceRight = swapAllianceSidesInput.checked;
+        container.remove();
+        renderSchedule(currentSchedule, currentReplayMatchNum);
+      });
 
       const list = document.createElement('div');
       
@@ -590,14 +617,20 @@
 
         const redHtml = renderGroup(match.teams.slice(0, 3), 0);
         const blueHtml = renderGroup(match.teams.slice(3, 6), 3);
+        const firstAlliance = redAllianceRight
+          ? `<div class="alliance-group alliance-blue">${blueHtml}</div>`
+          : `<div class="alliance-group alliance-red">${redHtml}</div>`;
+        const secondAlliance = redAllianceRight
+          ? `<div class="alliance-group alliance-red">${redHtml}</div>`
+          : `<div class="alliance-group alliance-blue">${blueHtml}</div>`;
 
         row.innerHTML = `
           <span class="match-num">Q${match.matchNumber}</span>
           <span class="match-time">${timeStr}</span>
           <div class="team-list">
-            <div class="alliance-group">${redHtml}</div>
+            ${firstAlliance}
             <span class="vs-divider">VS</span>
-            <div class="alliance-group">${blueHtml}</div>
+            ${secondAlliance}
           </div>
         `;
         list.appendChild(row);
