@@ -88,6 +88,26 @@
       gap: 1rem;
     }
 
+    .form-options {
+      margin-top: 1rem;
+    }
+
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: none;
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      accent-color: var(--accent);
+    }
+
     button {
       background: var(--accent);
       color: #000;
@@ -259,6 +279,12 @@
         <input type="number" id="match-input" min="1" placeholder="e.g. 35" disabled />
       </div>
     </div>
+    <div class="form-options" id="score-filter-option" hidden>
+      <label class="checkbox-label" for="score-filter-input">
+        <input type="checkbox" id="score-filter-input" checked disabled />
+        Take into account what matches have already been played
+      </label>
+    </div>
     <button id="find-btn" disabled>Find Replay Slots</button>
     <div class="status" id="status"></div>
   </div>
@@ -298,6 +324,8 @@
             ...m.alliances.blue.team_keys,
           ].map(k => k.replace('frc', '')), 
           timestamp: m.time ? new Date(m.time * 1000) : undefined,
+          hasScore: [m.alliances.red.score, m.alliances.blue.score]
+            .some(score => score >= 0),
         }))
         .sort((a, b) => a.matchNumber - b.matchNumber);
     }
@@ -343,6 +371,8 @@
 
     const eventSelect = document.getElementById('event-select');
     const matchInput  = document.getElementById('match-input');
+    const scoreFilterOption = document.getElementById('score-filter-option');
+    const scoreFilterInput = document.getElementById('score-filter-input');
     const findBtn     = document.getElementById('find-btn');
     const statusEl    = document.getElementById('status');
     const resultsEl   = document.getElementById('results');
@@ -356,6 +386,15 @@
       eventSelect.disabled = false;
       matchInput.disabled  = false;
       findBtn.disabled     = false;
+    }
+
+    function updateScoreFilterVisibility() {
+      const selectedOption = eventSelect.selectedOptions[0];
+      const isEventActive = selectedOption && selectedOption.dataset.active === 'true';
+
+      scoreFilterOption.hidden = !isEventActive;
+      scoreFilterInput.disabled = !isEventActive;
+      scoreFilterInput.checked = isEventActive;
     }
 
     // Load events on page load
@@ -379,6 +418,7 @@
             const opt = document.createElement('option');
             opt.value = e.key;
             opt.textContent = `${e.name} (${e.event_code.toUpperCase()})`;
+            opt.dataset.active = 'true';
             grp.appendChild(opt);
           });
           eventSelect.appendChild(grp);
@@ -391,18 +431,22 @@
             const opt = document.createElement('option');
             opt.value = e.key;
             opt.textContent = `${e.name} — ${e.start_date}`;
+            opt.dataset.active = 'false';
             grp.appendChild(opt);
           });
           eventSelect.appendChild(grp);
         }
 
         enableForm();
+        updateScoreFilterVisibility();
         setStatus(`${events.length} events loaded.`);
       } catch (err) {
         setStatus(`Failed to load events: ${err.message}`, 'error');
         console.error(err);
       }
     })();
+
+    eventSelect.addEventListener('change', updateScoreFilterVisibility);
 
     // Run on button click
     findBtn.addEventListener('click', async () => {
@@ -426,7 +470,10 @@
         }
 
         // Now it's safe to call these
-        const result = findReplaySlot(schedule, matchNum, { topN: 5 });
+        const result = findReplaySlot(schedule, matchNum, {
+          topN: 5,
+          considerScores: !scoreFilterOption.hidden && scoreFilterInput.checked,
+        });
         
         renderResults(result, matchNum);
         renderSchedule(schedule, matchNum); // Pass the raw schedule and number
