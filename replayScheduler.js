@@ -231,9 +231,11 @@ function findReplaySlot(schedule, replayMatchNumber, { topN = 5 } = {}) {
 // Exports
 // ---------------------------------------------------------------------------
 
-module.exports = {
-  findReplaySlot,
-  computeTeamGap,
-  computeMinGapAtInsertion,
-  detectBreaks,
-};
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    findReplaySlot,
+    computeTeamGap,
+    computeMinGapAtInsertion,
+    detectBreaks,
+  };
+}

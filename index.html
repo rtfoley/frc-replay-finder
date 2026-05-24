@@ -88,6 +88,30 @@
       gap: 1rem;
     }
 
+    .form-options {
+      margin-top: 1rem;
+    }
+
+    .schedule-options {
+      margin-bottom: 1.25rem;
+    }
+
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: none;
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      accent-color: var(--accent);
+    }
+
     button {
       background: var(--accent);
       color: #000;
@@ -157,8 +181,51 @@
     }
 
     .match-row.has-replay-team { background: rgba(240, 165, 0, 0.03); }
+
+    .replay-option-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      min-height: 2.25rem;
+      margin: 0;
+      padding: 0.35rem 0.75rem;
+      border-bottom: 1px solid rgba(240, 165, 0, 0.18);
+      color: var(--text);
+      font-family: var(--mono);
+    }
+
+    .replay-option-rank {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .replay-option-rank::after {
+      content: '→';
+      color: var(--accent);
+    }
+
+    .replay-option-label {
+      color: var(--text);
+      font-weight: 700;
+      opacity: 0.95;
+      text-align: center;
+    }
+
+    .replay-option-gap {
+      color: var(--green);
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
     
     .match-row.break {
+      display: flex;
+      justify-content: center;
       background: var(--surface);
       color: var(--accent);
       font-weight: 700;
@@ -233,6 +300,10 @@
       .vs-divider { display: none; }
       .match-row { grid-template-columns: 3.5rem 1fr; }
       .match-time { display: none; } /* Saves space on mobile rows */
+      .replay-option-row {
+        flex-wrap: wrap;
+        row-gap: 0.25rem;
+      }
     }
 
     @keyframes blink { 50% { opacity: 0; } }
@@ -346,6 +417,10 @@
     const findBtn     = document.getElementById('find-btn');
     const statusEl    = document.getElementById('status');
     const resultsEl   = document.getElementById('results');
+    let currentSchedule = null;
+    let currentResult = null;
+    let currentMatchNum = null;
+    let showInlineOptions = true;
 
     function setStatus(msg, type = '') {
       statusEl.textContent = msg;
@@ -427,9 +502,11 @@
 
         // Now it's safe to call these
         const result = findReplaySlot(schedule, matchNum, { topN: 5 });
-        
-        renderResults(result, matchNum);
-        renderSchedule(schedule, matchNum); // Pass the raw schedule and number
+        currentSchedule = schedule;
+        currentResult = result;
+        currentMatchNum = matchNum;
+
+        renderResultsAndSchedule();
         
         setStatus('');
       } catch (err) {
@@ -439,6 +516,13 @@
         findBtn.disabled = false;
       }
     });
+
+    function renderResultsAndSchedule() {
+      renderResults(currentResult, currentMatchNum);
+      if (currentSchedule && currentMatchNum) {
+        renderSchedule(currentSchedule, currentMatchNum, currentResult, showInlineOptions);
+      }
+    }
 
     function renderResults(result, matchNum) {
       resultsEl.innerHTML = '';
@@ -488,7 +572,7 @@
       resultsEl.appendChild(wrap);
     }
 
-    function renderSchedule(schedule, replayMatchNum) {
+    function renderSchedule(schedule, replayMatchNum, result, showReplayOptions = true) {
       const targetNum = Number(replayMatchNum);
       const replayMatch = schedule.find(m => Number(m.matchNumber) === targetNum);
 
@@ -501,9 +585,45 @@
 
       const container = document.createElement('div');
       container.className = 'card schedule-container';
-      container.innerHTML = `<div class="results-header">Full Schedule (from Q${targetNum})</div>`;
+      container.innerHTML = `
+        <div class="results-header">Full Schedule (from Q${targetNum})</div>
+        <div class="form-options schedule-options">
+          <label class="checkbox-label" for="schedule-inline-options-input">
+            <input type="checkbox" id="schedule-inline-options-input" ${showInlineOptions ? 'checked' : ''} />
+            Show replay options in schedule
+          </label>
+        </div>
+      `;
+
+      const scheduleInlineOptionsInput = container.querySelector('#schedule-inline-options-input');
+      scheduleInlineOptionsInput.addEventListener('change', () => {
+        showInlineOptions = scheduleInlineOptionsInput.checked;
+        renderResultsAndSchedule();
+      });
 
       const list = document.createElement('div');
+      const candidateByInsertionIndex = new Map();
+
+      if (showReplayOptions && result && result.candidates) {
+        result.candidates.forEach((candidate, rankIndex) => {
+          candidateByInsertionIndex.set(candidate.insertionIndex, {
+            ...candidate,
+            rank: rankIndex + 1,
+          });
+        });
+      }
+
+      const renderReplayOption = (candidate) => {
+        const row = document.createElement('div');
+        row.className = 'replay-option-row';
+        const gapDisplay = candidate.minGap === Infinity ? '∞' : candidate.minGap;
+        row.innerHTML = `
+          <span class="replay-option-rank">#${candidate.rank}</span>
+          <span class="replay-option-label">Insert replay ${candidate.insertionLabel}</span>
+          <span class="replay-option-gap">min gap ${gapDisplay}</span>
+        `;
+        list.appendChild(row);
+      };
       
       for (let i = startIndex; i < schedule.length; i++) {
         const match = schedule[i];
@@ -518,6 +638,9 @@
             list.appendChild(breakRow);
           }
         }
+
+        const replayOption = candidateByInsertionIndex.get(i);
+        if (replayOption) renderReplayOption(replayOption);
 
         const row = document.createElement('div');
         const hasReplayTeam = match.teams.some(t => replayTeams.includes(t));
@@ -555,6 +678,9 @@
         `;
         list.appendChild(row);
       }
+
+      const finalReplayOption = candidateByInsertionIndex.get(schedule.length);
+      if (finalReplayOption) renderReplayOption(finalReplayOption);
       
       container.appendChild(list);
       resultsEl.appendChild(container);
